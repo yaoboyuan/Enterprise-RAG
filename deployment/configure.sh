@@ -27,7 +27,7 @@ while getopts "p:u:n:" opt; do
 done
 
 echo "USE WITH CAUTION THIS SCRIPT USES SUDO PRIVILAGES TO INSTALL NEEDED PACKAGES LOCALLY AND CONFIGURE THEM. \
-USING IT MAY OVERWRITE EXISTING CONFIGURATION. Press ctrl+c to cancel. Sleeping for 30s." && sleep 30
+USING IT MAY OVERWRITE EXISTING CONFIGURATION. Press ctrl+c to cancel. Sleeping for 5s." && sleep 5
 
 # Update package list
 sudo apt-get update -q
@@ -39,9 +39,9 @@ sudo apt-get install -y -q build-essential make zip jq apt-transport-https ca-ce
 if command_exists docker; then
     echo "Docker is already installed."
 else
-    curl -fsSL https://get.docker.com -o get-docker.sh
-    sudo bash get-docker.sh --version 25.0.1
-    rm get-docker.sh
+    sudo -E curl -fsSL https://get.docker.com -o get-docker.sh
+    sudo -E bash get-docker.sh --version 25.0.1
+    sudo rm get-docker.sh
 
     sudo usermod -aG docker "$USER"
 
@@ -52,6 +52,36 @@ else
         exit 1
     fi
 fi
+sudo systemctl restart docker
+
+# 設定 Docker proxy
+if [[ -n "$http_proxy" && -n "$https_proxy" ]]; then
+    sudo mkdir -p /etc/systemd/system/docker.service.d/
+    sudo tee /etc/systemd/system/docker.service.d/http-proxy.conf <<EOF
+[Service]
+Environment="HTTP_PROXY=$http_proxy"
+Environment="HTTPS_PROXY=$https_proxy"
+EOF
+    sudo systemctl daemon-reload
+    sudo systemctl restart docker
+    echo "Docker 代理設置完成"
+else
+    echo "沒有檢測到代理設置，跳過 Docker 代理配置"
+fi
+
+
+# if [ "$(docker ps -q -f name=registry)" ]; then
+#     echo "✅ Local Docker registry is already running."
+# else
+#     # 檢查是否有名為 registry 的 container 停止了（但存在）
+#     if [ "$(docker ps -aq -f name=registry)" ]; then
+#         echo "🔄 Found stopped registry container. Starting it..."
+#         docker start registry
+#     else
+#         echo "🚀 Starting new local Docker registry on port 5000..."
+#         docker run -d -p 5000:5000 --restart=always --name registry registry:2
+#     fi
+# fi
 
 # Configure Docker proxy settings if provided
 if [[ -n "$RAG_HTTP_PROXY" || "$RAG_HTTPS_PROXY" || "$RAG_NO_PROXY" ]]; then
@@ -70,6 +100,13 @@ if [[ -n "$RAG_HTTP_PROXY" || "$RAG_HTTPS_PROXY" || "$RAG_NO_PROXY" ]]; then
         echo "Created Docker config.json, restarting docker.service"
     fi
 fi
+
+# # Install Kubectl
+# echo "starting installing kubectl"
+# curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+# sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+# kubectl version --client
+# echo "finish installation of kubecvtl"
 
 # Install Helm if not already installed
 if command_exists helm; then
