@@ -43,6 +43,9 @@ if [ -z "$HUG_TOKEN" ]; then
     usage
 fi
 
+# Prerequisites
+bash prerequisites.sh
+
 # Setup the environment
 bash configure.sh -p "$RAG_HTTP_PROXY" -u "$RAG_HTTPS_PROXY" -n "$RAG_NO_PROXY"
 
