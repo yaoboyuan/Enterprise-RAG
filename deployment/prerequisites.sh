@@ -18,6 +18,7 @@ VENVDIR="kubespray-venv"
 INVENTORY_DIR="inventory/mycluster"
 HOSTS_FILE="$INVENTORY_DIR/hosts.ini"
 NODE_IP=$(hostname -I | awk '{print $1}')
+NODE_NAME=$(hostname)
 CURRENT_USER=$USER
 ALL_YML="$INVENTORY_DIR/group_vars/all/all.yml"
 ADDONS_YML="$INVENTORY_DIR/group_vars/k8s_cluster/addons.yml"
@@ -68,16 +69,16 @@ else
 fi
 
 cat > "$HOSTS_FILE" <<EOF
-node1 ansible_host=$NODE_IP
+$NODE_NAME ansible_host=$NODE_IP
 
 [kube_control_plane]
-node1
+$NODE_NAME
 
 [etcd]
-node1
+$NODE_NAME
 
 [kube_node]
-node1
+$NODE_NAME
 EOF
 
 info "hosts.ini 已建立，Kubespray 設定完成！"
