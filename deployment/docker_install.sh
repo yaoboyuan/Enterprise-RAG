@@ -50,3 +50,19 @@ if [[ -n "$RAG_HTTP_PROXY" || -n "$RAG_HTTPS_PROXY" || -n "$RAG_NO_PROXY" ]]; th
     fi
 fi
 
+
+# 設定 Docker proxy
+if [[ -n "$http_proxy" && -n "$https_proxy" ]]; then
+    sudo mkdir -p /etc/systemd/system/docker.service.d/
+    sudo tee /etc/systemd/system/docker.service.d/http-proxy.conf <<EOF
+[Service]
+Environment="HTTP_PROXY=$http_proxy"
+Environment="HTTPS_PROXY=$https_proxy"
+EOF
+    sudo systemctl daemon-reload
+    sudo systemctl restart docker
+    echo "Docker 代理設置完成"
+else
+    echo "沒有檢測到代理設置，跳過 Docker 代理配置"
+fi
+
