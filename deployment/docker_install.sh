@@ -58,6 +58,7 @@ if [[ -n "$http_proxy" && -n "$https_proxy" ]]; then
 [Service]
 Environment="HTTP_PROXY=$http_proxy"
 Environment="HTTPS_PROXY=$https_proxy"
+Environment="NO_PROXY=$no_proxy"
 EOF
     sudo systemctl daemon-reload
     sudo systemctl restart docker
